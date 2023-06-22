@@ -39,10 +39,13 @@ def compare_clusters(csv_clusters, txt_clusters):
     return missing_clusters
 
 # filter csv file and write missing cluster IDs to a report
-def filter_csv_file(input_csv, input_txt, output_csv):
+def filter_csv_file(input_csv, input_txt, input_txt2, output_csv):
+    txt_clusters1 = read_text_file(input_txt)
+    txt_clusters2 = read_text_file(input_txt2)
     csv_clusters = read_csv_file(input_csv)
-    txt_clusters = read_text_file(input_txt)
-    missing_clusters = compare_clusters(csv_clusters, txt_clusters)
+
+    union_clusters = txt_clusters1.union(txt_clusters2, csv_clusters)
+    missing_clusters = compare_clusters(union_clusters, txt_clusters1.union(txt_clusters2))
 
     rows = []
     with open(input_csv, 'r') as file:
@@ -51,6 +54,10 @@ def filter_csv_file(input_csv, input_txt, output_csv):
 
     output_rows = [row for row in rows if len(row) >= 2 and row[1] in missing_clusters]
     write_csv_file(output_csv, output_rows)
+
+    missing_percentage = (len(missing_clusters) / len(union_clusters)) * 100
+
+    return round(missing_percentage,2)
 
 # combine operator names from multiple text files
 unique_operators = []
@@ -81,7 +88,7 @@ def generateReport(csv_file, attachments_folder, combined_certified_operators, c
             break
         
         attachment_path = os.path.join(cluster_folder, attachment_id)
-        subprocess.run(["/usr/bin/redhat-support-tool", "getattachment", "-c", case_number, "-u", attachment_id, "-d", cluster_folder])
+        # subprocess.run(["/usr/bin/redhat-support-tool", "getattachment", "-c", case_number, "-u", attachment_id, "-d", cluster_folder])
 
         attachment_file = None
         for root, dirs, files in os.walk(cluster_folder):
@@ -167,13 +174,13 @@ def main():
     for line in combined_redhat_operators:
         redhat_operators.add(line.strip().strip('"'))
     
-    input_csv_file = 'report1686859257772.csv'
+    input_csv_file = 'output2.csv'
     telesense_file = 'tele.txt'
     superset_file = 'sset.txt'
     output_csv_file = 'missing_clusters.csv'
 
-    filter_csv_file(input_csv_file, telesense_file, output_csv_file)
-    filter_csv_file(output_csv_file, superset_file, output_csv_file)
+    missing_percent = filter_csv_file(input_csv_file, telesense_file, superset_file, output_csv_file)
+    # filter_csv_file(output_csv_file, superset_file, output_csv_file)
 
     attachments_folder = "attachments"
     report_json = "final-report-test.json"
@@ -181,6 +188,24 @@ def main():
     if not os.path.isfile(report_json):
         file = open(report_json,"x")
         file.close()
+
+    existing_data = []
+    try:
+        with open(report_json, "r") as file:
+            existing_data = json.load(file)
+    except JSONDecodeError:
+        pass
+
+    cluster_report = {
+        "Missing Percentage": f"{missing_percent:.2f}%"
+    }
+
+    # Append the new cluster report to existing data
+    existing_data.append(cluster_report)
+
+    # Write the updated data to final-report-test.json
+    with open(report_json, "w") as file:
+        json.dump(existing_data, file, indent=4)
     generateReport(output_csv_file, attachments_folder, certified_operators, redhat_operators)
     
 
