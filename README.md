@@ -11,13 +11,15 @@ The code is divided into 3 main parts:
 5. The report generated is in the form of a json file.
 
 ## Prerequisites
-The code requires the following Python dependencies to be installed:
+Python 3.6+ and the following packages:
 
-json: a built-in module for working with JSON data.
-csv: a built-in module for reading and writing CSV files.
-os: a built-in module for interacting with the operating system.
-subprocess: a built-in module for running external commands.
-Note: In this case, we are using python3
+- json: a built-in module for working with JSON data.
+- csv: a built-in module for reading and writing CSV files.
+- os: a built-in module for interacting with the operating system.
+- subprocess: a built-in module for running external commands.
+
+- Red Hat Support tool (`yum install redhat-support-tool) in a RHEL8 machine to run the script.
+- OMG tool for parsing must-gathers (https://github.com/kxr/o-must-gather)
 
 ## Usage
 1. Clone the repo
